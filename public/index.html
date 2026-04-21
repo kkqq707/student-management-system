@@ -1,0 +1,1238 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>学生管理系统</title>
+    <style>
+      :root {
+        --bg: #f0f4ff;
+        --bg-soft: #f8faff;
+        --card: #ffffff;
+        --text: #172033;
+        --muted: #5b6475;
+        --line: #dfe6f5;
+        --primary: #315efb;
+        --primary-hover: #2347ce;
+        --primary-soft: #e9efff;
+        --danger: #dc2626;
+        --shadow: 0 8px 24px rgba(37, 62, 128, 0.08);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        background: radial-gradient(circle at top right, #dfe8ff, var(--bg) 40%);
+        color: var(--text);
+      }
+      .page { padding: 22px; }
+      .title {
+        margin: 0 0 16px 0;
+        font-size: 32px;
+        letter-spacing: 1px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow);
+      }
+      h3 { margin: 0 0 12px 0; font-size: 18px; }
+      input, select, button {
+        height: 36px;
+        padding: 6px 12px;
+        border: 1px solid #cfd8ec;
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        transition: all .18s ease;
+      }
+      input::placeholder { color: #99a3b8; }
+      input:focus, select:focus {
+        outline: none;
+        border-color: #88a2ff;
+        box-shadow: 0 0 0 3px rgba(49, 94, 251, .15);
+      }
+      input[type="checkbox"]:focus {
+        box-shadow: none;
+        outline: none;
+      }
+      button {
+        cursor: pointer;
+        border-color: var(--primary);
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+      }
+      button:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: .65;
+      }
+      .app-layout { display: grid; grid-template-columns: 300px 1fr; gap: 18px; align-items: start; }
+      .left-panel { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
+      .menu { display: grid; gap: 9px; }
+      .menu-btn {
+        text-align: left;
+        width: 100%;
+        border-color: #d8e1f7;
+        background: var(--bg-soft);
+        color: #1f2b49;
+      }
+      .menu-btn:hover { background: #e4ecff; border-color: #c5d5ff; }
+      .menu-btn.active {
+        background: linear-gradient(135deg, #315efb, #5b7cff);
+        border-color: #315efb;
+        color: #fff;
+      }
+      .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .stat-line {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 14px;
+      }
+      .stat-line span {
+        background: var(--primary-soft);
+        color: #2a3c8f;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid #d4defe;
+      }
+      .right-section { display: none; }
+      .right-section.active { display: block; }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      th, td {
+        border-bottom: 1px solid #e8eefb;
+        padding: 10px;
+        text-align: left;
+      }
+      tr:last-child td { border-bottom: none; }
+      tbody tr:hover { background: #f7faff; }
+      th {
+        background: #f3f7ff;
+        color: #33405f;
+        font-weight: 700;
+      }
+      .table-wrap { overflow: auto; }
+      .table-wrap table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      .empty-cell {
+        text-align: center;
+        padding: 24px 10px;
+        color: var(--muted);
+        background: #fbfcff;
+      }
+      .skeleton-line {
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #eef2fb 25%, #e2e8f8 50%, #eef2fb 75%);
+        background-size: 200% 100%;
+        animation: loadingShimmer 1.2s infinite;
+      }
+      .skeleton-line.w-40 { width: 40%; }
+      .skeleton-line.w-55 { width: 55%; }
+      .skeleton-line.w-70 { width: 70%; }
+      @keyframes loadingShimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+      .global-message {
+        position: fixed;
+        right: 18px;
+        top: 18px;
+        z-index: 9999;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        color: #1f2b49;
+        border: 1px solid #ccdafd;
+        background: #eef3ff;
+        box-shadow: 0 8px 24px rgba(37, 62, 128, 0.12);
+        display: none;
+      }
+      .global-message.success {
+        color: #125b36;
+        border-color: #b7e9cb;
+        background: #ecfbf3;
+      }
+      .global-message.error {
+        color: #a61b35;
+        border-color: #f5bfd0;
+        background: #fff1f4;
+      }
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid transparent;
+      }
+      .tag-success { color: #12663c; background: #eafaf0; border-color: #b7e9cb; }
+      .tag-warning { color: #8a5a06; background: #fff8e8; border-color: #f7dfad; }
+      .tag-danger { color: #a61b35; background: #fff0f3; border-color: #f5bfd0; }
+      .tag-default { color: #415172; background: #eef3ff; border-color: #d4dffc; }
+      .page-header {
+        margin-bottom: 14px;
+      }
+      .page-desc {
+        margin: 6px 0 0 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .section-title {
+        margin: 0;
+        font-size: 16px;
+      }
+      .section-subtitle {
+        margin: 4px 0 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(140px, 1fr));
+        gap: 12px;
+      }
+      .content-stack {
+        display: grid;
+        gap: 16px;
+      }
+      .stat-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fbfcff;
+        padding: 12px;
+      }
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 12px;
+      }
+      .chart-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fbfcff;
+        padding: 12px;
+      }
+      .chart-title {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #33405f;
+      }
+      .chart-empty {
+        color: var(--muted);
+        font-size: 13px;
+        padding: 8px 0;
+      }
+      .bar-list {
+        display: grid;
+        gap: 8px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 90px 1fr 52px;
+        align-items: center;
+        gap: 8px;
+      }
+      .bar-label {
+        color: #3e4c6d;
+        font-size: 13px;
+      }
+      .bar-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #e8eefc;
+        overflow: hidden;
+      }
+      .bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, #5b7cff, #315efb);
+      }
+      .bar-value {
+        font-size: 12px;
+        color: #3e4c6d;
+        text-align: right;
+      }
+      .donut-list {
+        display: grid;
+        gap: 8px;
+      }
+      .donut-item {
+        display: block;
+        border: 1px solid #e3eafb;
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+      .donut-main {
+        display: grid;
+        gap: 6px;
+      }
+      .donut-header {
+        display: grid;
+        grid-template-columns: auto 1fr auto auto;
+        align-items: center;
+        gap: 8px;
+      }
+      .donut-label {
+        color: #3e4c6d;
+        font-size: 13px;
+      }
+      .donut-value {
+        color: #1f2f56;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .donut-percent {
+        color: #51638f;
+        font-size: 12px;
+      }
+      .donut-track {
+        height: 8px;
+        border-radius: 999px;
+        background: #e8eefc;
+        overflow: hidden;
+      }
+      .donut-fill {
+        height: 100%;
+        border-radius: 999px;
+      }
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      .feed-list {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--muted);
+      }
+      .feed-list li {
+        margin-bottom: 6px;
+      }
+      .stat-label {
+        color: var(--muted);
+        font-size: 13px;
+        margin-bottom: 8px;
+      }
+      .stat-value {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1e2a48;
+      }
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+        gap: 12px;
+      }
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .form-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        grid-column: 1 / -1;
+      }
+      .filter-grid {
+        display: grid;
+        gap: 10px;
+      }
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      .btn-secondary {
+        background: #fff;
+        color: #2d3f79;
+        border-color: #c8d6fb;
+      }
+      .btn-secondary:hover { background: #eef3ff; border-color: #aec3ff; }
+      .btn-danger {
+        background: #fff1f2;
+        color: #c2253d;
+        border-color: #f6c2cb;
+      }
+      .btn-danger:hover { background: #ffe4e8; border-color: #ef98a8; }
+      .btn-ghost {
+        height: 30px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #fff;
+        color: #304777;
+        border-color: #ccdafd;
+        font-weight: 500;
+      }
+      .btn-ghost:hover { background: #edf2ff; }
+      .btn-danger-ghost {
+        height: 30px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        background: #fff6f7;
+        color: #bf1f3d;
+        border-color: #f3bcc9;
+        font-weight: 500;
+      }
+      .btn-danger-ghost:hover { background: #ffe8ed; }
+      .pagination-bar {
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .pagination-info {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .ops-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .ops-subcard {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        background: #fbfcff;
+      }
+      .ops-subtitle {
+        margin: 0 0 8px 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      #operationLogList { margin: 0; padding-left: 18px; color: var(--muted); }
+      #operationLogList li { margin-bottom: 6px; }
+      .detail-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(12, 22, 46, 0.45);
+        z-index: 10000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .detail-panel {
+        width: min(720px, 100%);
+        max-height: 80vh;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 24px 48px rgba(15, 28, 63, 0.22);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .detail-header,
+      .detail-footer {
+        padding: 14px 18px;
+        border-bottom: 1px solid #ebeff8;
+        background: #f8faff;
+      }
+      .detail-footer {
+        border-top: 1px solid #ebeff8;
+        border-bottom: none;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .detail-header-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .detail-title {
+        margin: 0;
+        font-size: 18px;
+      }
+      .detail-subtitle {
+        margin: 4px 0 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .detail-close-btn {
+        width: 32px;
+        min-width: 32px;
+        height: 32px;
+        padding: 0;
+        border-radius: 8px;
+      }
+      .detail-body {
+        padding: 16px 18px;
+        overflow: auto;
+        background: #fff;
+      }
+      .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+        gap: 10px 14px;
+      }
+      .detail-item {
+        border: 1px solid #edf1fa;
+        background: #fafcff;
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      .detail-label {
+        font-size: 12px;
+        color: #66718a;
+        margin-bottom: 4px;
+      }
+      .detail-value {
+        font-size: 14px;
+        color: #1f2940;
+        word-break: break-all;
+      }
+      .detail-remark {
+        margin-top: 12px;
+        border: 1px solid #edf1fa;
+        background: #fafcff;
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .detail-meta {
+        margin-top: 12px;
+        color: #7a849a;
+        font-size: 12px;
+        display: grid;
+        gap: 4px;
+      }
+      .confirm-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(12, 22, 46, 0.45);
+        z-index: 10001;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .confirm-panel {
+        width: min(520px, 100%);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: 0 22px 44px rgba(15, 28, 63, 0.2);
+        overflow: hidden;
+      }
+      .confirm-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid #ebeff8;
+        background: #fff7f8;
+      }
+      .confirm-title {
+        margin: 0;
+        font-size: 17px;
+      }
+      .confirm-subtitle {
+        margin: 4px 0 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .confirm-body {
+        padding: 16px;
+      }
+      .confirm-text {
+        margin: 0;
+        color: #25304a;
+        line-height: 1.6;
+      }
+      .confirm-footer {
+        padding: 12px 16px;
+        border-top: 1px solid #ebeff8;
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        background: #f8faff;
+      }
+      @media (max-width: 1100px) {
+        .app-layout { grid-template-columns: 1fr; }
+        .left-panel { position: static; max-height: none; }
+        .stats-grid { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+        .form-grid { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
+        .ops-grid { grid-template-columns: 1fr; }
+        .detail-grid { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div id="globalMessage" class="global-message"></div>
+      <div class="page-header">
+        <h1 class="title">学生管理系统</h1>
+        <p class="page-desc">统一管理学生信息、状态与基础档案，覆盖班级、课程、成绩、考勤与系统运维。</p>
+      </div>
+
+      <div class="card" id="loginCard">
+        <h3>管理员登录</h3>
+        <form id="loginForm" class="toolbar">
+          <input id="username" placeholder="账号" required />
+          <input id="password" type="password" placeholder="密码" required />
+          <button type="submit">登录</button>
+        </form>
+        <div style="margin-top: 8px; color: #666;">默认账号：admin / admin123</div>
+      </div>
+
+      <div id="mainApp" style="display: none;">
+        <div class="app-layout">
+          <div class="left-panel">
+            <div class="card">
+              <div class="toolbar" style="justify-content: space-between;">
+                <h3 id="welcomeText" style="margin: 0;">欢迎</h3>
+                <button id="logoutBtn" class="btn-secondary">退出登录</button>
+              </div>
+            </div>
+            <div class="card">
+              <h3>功能菜单</h3>
+              <div class="menu" id="featureMenu">
+                <button class="menu-btn active" data-section="section-dashboard">📊 首页看板</button>
+                <button class="menu-btn" data-section="section-students">👥 学生管理</button>
+                <button class="menu-btn" data-section="section-classes">🏫 班级管理</button>
+                <button class="menu-btn" data-section="section-courses">📚 课程管理</button>
+                <button class="menu-btn" data-section="section-grades">📝 成绩管理</button>
+                <button class="menu-btn" data-section="section-attendance">📅 考勤管理</button>
+                <button class="menu-btn" data-section="section-system">⚙️ 系统与日志</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-panel">
+            <div id="section-dashboard" class="right-section active">
+              <div class="content-stack">
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">首页数据看板</h3>
+                      <p class="section-subtitle">统一展示学生、班级、成绩、考勤关键指标，便于快速掌握系统整体运行情况。</p>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">学生总数</div><div class="stat-value" id="dashStudentTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">班级总数</div><div class="stat-value" id="dashClassTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">成绩记录数</div><div class="stat-value" id="dashGradeTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">考勤记录数</div><div class="stat-value" id="dashAttendanceTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">平均总评</div><div class="stat-value" id="dashAvgScore">0</div></div>
+                    <div class="stat-card"><div class="stat-label">及格率</div><div class="stat-value" id="dashPassRate">0%</div></div>
+                    <div class="stat-card"><div class="stat-label">缺勤人数</div><div class="stat-value" id="dashAbsentCount">0</div></div>
+                    <div class="stat-card"><div class="stat-label">请假人数</div><div class="stat-value" id="dashLeaveCount">0</div></div>
+                  </div>
+                </div>
+
+                <div class="dashboard-grid">
+                  <div class="chart-card">
+                    <h4 class="chart-title">各班人数柱状图</h4>
+                    <div id="dashClassDistribution" class="bar-list"></div>
+                  </div>
+                  <div class="chart-card">
+                    <h4 class="chart-title">成绩状态分布</h4>
+                    <div id="dashGradeStatus" class="donut-list"></div>
+                  </div>
+                  <div class="chart-card">
+                    <h4 class="chart-title">考勤状态分布</h4>
+                    <div id="dashAttendanceStatus" class="donut-list"></div>
+                  </div>
+                  <div class="chart-card">
+                    <h4 class="chart-title">最近动态</h4>
+                    <ul id="dashRecentFeed" class="feed-list"></ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-students" class="right-section">
+              <div class="content-stack">
+                <div class="card" id="studentFormCard">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">学生管理</h3>
+                      <p class="section-subtitle">统一管理学生信息、状态与基础档案，支持完整的增删改查流程。</p>
+                    </div>
+                    <div class="toolbar">
+                      <button id="quickAddStudentBtn">新增学生</button>
+                      <button id="quickImportBtn" class="btn-secondary">导入 Excel</button>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">总人数</div><div class="stat-value" id="statTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">平均年龄</div><div class="stat-value" id="statAvgAge">0</div></div>
+                    <div class="stat-card"><div class="stat-label">班级数</div><div class="stat-value" id="statClassCount">0</div></div>
+                    <div class="stat-card"><div class="stat-label">在读人数</div><div class="stat-value" id="statInSchool">0</div></div>
+                  </div>
+                </div>
+
+                <div class="card" id="classFormCard">
+                  <div class="panel-head">
+                    <div>
+                      <h3 id="formTitle">新增学生</h3>
+                      <p class="section-subtitle">录入或编辑学生基础信息，保存后自动刷新并更新统计。</p>
+                    </div>
+                  </div>
+                  <form id="studentForm" class="form-grid">
+                    <input type="hidden" id="studentId" />
+                    <div class="field"><label for="studentNo">学号</label><input id="studentNo" name="studentNo" placeholder="例如 S20260001" required /></div>
+                    <div class="field"><label for="name">姓名</label><input id="name" name="name" placeholder="请输入姓名" required /></div>
+                    <div class="field"><label for="age">年龄</label><input id="age" name="age" type="number" placeholder="请输入年龄" required min="1" /></div>
+                    <div class="field"><label for="gender">性别</label><select id="gender" name="gender"><option value="男">男</option><option value="女">女</option></select></div>
+                    <div class="field"><label for="studentClassId">班级ID</label><input id="studentClassId" name="classId" type="number" placeholder="可选" /></div>
+                    <div class="field"><label for="className">班级</label><input id="className" name="className" placeholder="请输入班级" required /></div>
+                    <div class="field"><label for="studentStatus">状态</label><select id="studentStatus" name="status"><option value="在读">在读</option><option value="休学">休学</option><option value="毕业">毕业</option></select></div>
+                    <div class="field"><label for="phone">联系方式</label><input id="phone" name="phone" placeholder="请输入手机号" /></div>
+                    <div class="field"><label for="enrollmentDate">入学日期</label><input id="enrollmentDate" name="enrollmentDate" type="date" /></div>
+                    <div class="field"><label for="guardianName">家长姓名</label><input id="guardianName" name="guardianName" placeholder="请输入家长姓名" /></div>
+                    <div class="field"><label for="guardianPhone">家长电话</label><input id="guardianPhone" name="guardianPhone" placeholder="请输入家长电话" /></div>
+                    <div class="field"><label for="remark">备注</label><input id="remark" name="remark" placeholder="可选备注" /></div>
+                    <div class="form-actions">
+                      <button type="submit">保存</button>
+                      <button type="button" id="resetStudentFormBtn" class="btn-secondary">重置</button>
+                      <button type="button" id="cancelEdit" class="btn-secondary" style="display: none;">取消编辑</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="ops-grid">
+                  <div class="card" style="margin-bottom: 0;">
+                    <div class="panel-head">
+                      <div>
+                        <h3 class="section-title">筛选条件</h3>
+                        <p class="section-subtitle">支持关键词、状态、排序与分页的组合查询。</p>
+                      </div>
+                    </div>
+                    <div class="filter-grid">
+                      <div class="filter-row">
+                        <input id="search" placeholder="按姓名/学号/班级搜索" />
+                        <button id="searchBtn">搜索</button>
+                        <button id="resetBtn" class="btn-secondary">重置</button>
+                      </div>
+                      <div class="filter-row">
+                        <select id="statusFilter"><option value="">全部状态</option><option value="在读">在读</option><option value="休学">休学</option><option value="毕业">毕业</option></select>
+                        <select id="sortBy"><option value="id">按ID</option><option value="studentNo">按学号</option><option value="name">按姓名</option><option value="age">按年龄</option><option value="className">按班级</option><option value="enrollmentDate">按入学日期</option></select>
+                        <select id="sortOrder"><option value="desc">降序</option><option value="asc">升序</option></select>
+                        <select id="pageSize"><option value="5">5条/页</option><option value="10" selected>10条/页</option><option value="20">20条/页</option></select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="card" style="margin-bottom: 0;">
+                    <div class="panel-head">
+                      <div>
+                        <h3 class="section-title">数据操作</h3>
+                        <p class="section-subtitle">提供批量删除、数据导出与 Excel 导入能力。</p>
+                      </div>
+                    </div>
+                    <div class="filter-grid">
+                      <div class="ops-subcard">
+                        <p class="ops-subtitle">批量与导出</p>
+                        <div class="filter-row">
+                          <span id="selectedCountLabel" class="ops-subtitle">已选 0 项</span>
+                          <button id="batchDeleteBtn" class="btn-danger">批量删除</button>
+                          <button id="exportBtn" class="btn-secondary">导出 Excel</button>
+                          <button id="exportFailedBtn" class="btn-secondary">导出失败明细</button>
+                        </div>
+                      </div>
+                      <div class="ops-subcard">
+                        <p class="ops-subtitle">导入数据</p>
+                        <div class="filter-row">
+                          <input id="importFile" type="file" accept=".xlsx,.xls" />
+                          <button id="importBtn">导入 Excel</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card table-wrap">
+                  <div class="panel-head" style="margin-bottom: 10px;">
+                    <div>
+                      <h3 class="section-title">学生数据列表</h3>
+                      <p class="section-subtitle">支持详情查看、编辑与删除，分页展示更清晰。</p>
+                    </div>
+                  </div>
+                  <table><thead><tr><th><input id="selectAllCurrentPage" type="checkbox" aria-label="当前页全选" /></th><th>学号</th><th>姓名</th><th>年龄</th><th>性别</th><th>班级</th><th>状态</th><th>联系方式</th><th>入学日期</th><th>操作</th></tr></thead><tbody id="studentTableBody"></tbody></table>
+                  <div class="pagination-bar"><div class="toolbar"><button id="prevPageBtn" class="btn-secondary">上一页</button><button id="nextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="pageInfo">第 1 / 1 页</span> · <span id="totalInfo">共 0 条</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-classes" class="right-section">
+              <div class="content-stack">
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">班级管理</h3>
+                      <p class="section-subtitle">统一管理班级信息、班主任安排与容量配置</p>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">班级总数</div><div class="stat-value" id="classStatTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">班主任人数</div><div class="stat-value" id="classStatTeachers">0</div></div>
+                    <div class="stat-card"><div class="stat-label">总容量</div><div class="stat-value" id="classStatCapacity">0</div></div>
+                    <div class="stat-card"><div class="stat-label">当前学生总数</div><div class="stat-value" id="classStatStudents">0</div></div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 id="classFormTitle">新增班级</h3>
+                      <p class="section-subtitle">支持新增与编辑两种模式，保存后立即刷新列表与统计。</p>
+                    </div>
+                  </div>
+                  <form id="classForm" class="form-grid">
+                    <input type="hidden" id="classId" />
+                    <div class="field"><label for="classNameManage">班级名称</label><input id="classNameManage" placeholder="请输入班级名称" required /></div>
+                    <div class="field"><label for="classTeacher">班主任</label><input id="classTeacher" placeholder="请输入班主任姓名" required /></div>
+                    <div class="field"><label for="classCapacity">容量</label><input id="classCapacity" type="number" min="1" placeholder="请输入班级容量" required /></div>
+                    <div class="field" style="grid-column: 1 / -1;"><label for="classRemark">备注</label><input id="classRemark" placeholder="可选备注信息" /></div>
+                    <div class="form-actions">
+                      <button type="submit">保存</button>
+                      <button type="reset" class="btn-secondary">重置</button>
+                      <button type="button" id="cancelClassEdit" class="btn-secondary" style="display: none;">取消编辑</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">筛选条件</h3>
+                      <p class="section-subtitle">支持关键词搜索、排序与分页条数配置。</p>
+                    </div>
+                  </div>
+                  <div class="filter-grid">
+                    <div class="filter-row">
+                      <input id="classSearch" placeholder="按班级名称/班主任搜索" />
+                      <button id="classSearchBtn">搜索</button>
+                      <button id="classResetBtn" class="btn-secondary">重置</button>
+                    </div>
+                    <div class="filter-row">
+                      <select id="classSortBy">
+                        <option value="id">按ID</option>
+                        <option value="name">按班级名称</option>
+                        <option value="teacher">按班主任</option>
+                        <option value="capacity">按容量</option>
+                        <option value="studentCount">按当前人数</option>
+                        <option value="createdAt">按创建时间</option>
+                      </select>
+                      <select id="classSortOrder"><option value="desc">降序</option><option value="asc">升序</option></select>
+                      <select id="classPageSize"><option value="5">5条/页</option><option value="10" selected>10条/页</option><option value="20">20条/页</option></select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card table-wrap">
+                  <div class="panel-head" style="margin-bottom: 10px;">
+                    <div>
+                      <h3 class="section-title">班级列表</h3>
+                      <p class="section-subtitle">支持详情查看、编辑与删除。</p>
+                    </div>
+                  </div>
+                  <table><thead><tr><th>班级ID</th><th>班级名称</th><th>班主任</th><th>容量</th><th>当前人数</th><th>利用率</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="classTableBody"></tbody></table>
+                  <div class="pagination-bar"><div class="toolbar"><button id="classPrevPageBtn" class="btn-secondary">上一页</button><button id="classNextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="classPageInfo">第 1 / 1 页</span> · <span id="classTotalInfo">共 0 条</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-courses" class="right-section">
+              <div class="content-stack">
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">课程管理</h3>
+                      <p class="section-subtitle">统一管理课程信息、授课教师与学分配置。</p>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">课程总数</div><div class="stat-value" id="courseStatTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">授课教师数</div><div class="stat-value" id="courseStatTeachers">0</div></div>
+                    <div class="stat-card"><div class="stat-label">总学分</div><div class="stat-value" id="courseStatTotalCredit">0</div></div>
+                    <div class="stat-card"><div class="stat-label">平均学分</div><div class="stat-value" id="courseStatAvgCredit">0</div></div>
+                  </div>
+                </div>
+
+                <div class="card" id="courseFormCard">
+                  <div class="panel-head">
+                    <div>
+                      <h3 id="courseFormTitle">新增课程</h3>
+                      <p class="section-subtitle">支持新增与编辑两种模式，保存后自动刷新列表。</p>
+                    </div>
+                  </div>
+                  <form id="courseForm" class="form-grid">
+                    <input type="hidden" id="courseId" />
+                    <div class="field"><label for="courseName">课程名称</label><input id="courseName" placeholder="请输入课程名称" required /></div>
+                    <div class="field"><label for="courseTeacher">授课教师</label><input id="courseTeacher" placeholder="请输入授课教师" required /></div>
+                    <div class="field"><label for="courseCredit">学分</label><input id="courseCredit" type="number" min="0.5" step="0.5" placeholder="请输入学分" required /></div>
+                    <div class="field" style="grid-column: 1 / -1;"><label for="courseRemark">备注</label><input id="courseRemark" placeholder="可选备注信息" /></div>
+                    <div class="form-actions">
+                      <button type="submit">保存</button>
+                      <button type="reset" class="btn-secondary">重置</button>
+                      <button type="button" id="cancelCourseEdit" class="btn-secondary" style="display: none;">取消编辑</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">筛选条件</h3>
+                      <p class="section-subtitle">支持关键词、排序与分页查询。</p>
+                    </div>
+                  </div>
+                  <div class="filter-grid">
+                    <div class="filter-row">
+                      <input id="courseSearch" placeholder="按课程名称/授课教师搜索" />
+                      <button id="courseSearchBtn">搜索</button>
+                      <button id="courseResetBtn" class="btn-secondary">重置</button>
+                    </div>
+                    <div class="filter-row">
+                      <select id="courseSortBy"><option value="id">按ID</option><option value="name">按课程名称</option><option value="teacher">按授课教师</option><option value="credit">按学分</option><option value="createdAt">按创建时间</option></select>
+                      <select id="courseSortOrder"><option value="desc">降序</option><option value="asc">升序</option></select>
+                      <select id="coursePageSize"><option value="5">5条/页</option><option value="10" selected>10条/页</option><option value="20">20条/页</option></select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card table-wrap">
+                  <div class="panel-head" style="margin-bottom: 10px;">
+                    <div>
+                      <h3 class="section-title">课程列表</h3>
+                      <p class="section-subtitle">支持详情查看、编辑与删除。</p>
+                    </div>
+                  </div>
+                  <table><thead><tr><th>ID</th><th>课程名称</th><th>授课教师</th><th>学分</th><th>备注</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="courseTableBody"></tbody></table>
+                  <div class="pagination-bar"><div class="toolbar"><button id="coursePrevPageBtn" class="btn-secondary">上一页</button><button id="courseNextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="coursePageInfo">第 1 / 1 页</span> · <span id="courseTotalInfo">共 0 条</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-grades" class="right-section">
+              <div class="content-stack">
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">成绩管理</h3>
+                      <p class="section-subtitle">统一管理学生课程成绩，支持总评自动计算与及格状态判定。</p>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">成绩记录数</div><div class="stat-value" id="gradeStatTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">平均总评</div><div class="stat-value" id="gradeStatAvg">0</div></div>
+                    <div class="stat-card"><div class="stat-label">及格率</div><div class="stat-value" id="gradeStatPassRate">0%</div></div>
+                    <div class="stat-card"><div class="stat-label">不及格人数</div><div class="stat-value" id="gradeStatFailCount">0</div></div>
+                  </div>
+                </div>
+
+                <div class="card" id="gradeFormCard">
+                  <div class="panel-head">
+                    <div>
+                      <h3 id="gradeFormTitle">新增成绩</h3>
+                      <p class="section-subtitle">平时成绩占 40%，期末成绩占 60%，总评和状态自动计算。</p>
+                    </div>
+                  </div>
+                  <form id="gradeForm" class="form-grid">
+                    <input type="hidden" id="gradeId" />
+                    <div class="field"><label for="gradeStudent">学生ID / 姓名</label><select id="gradeStudent" required></select></div>
+                    <div class="field"><label for="gradeStudentNo">学号</label><input id="gradeStudentNo" readonly placeholder="自动带出" /></div>
+                    <div class="field"><label for="gradeClassName">班级</label><input id="gradeClassName" readonly placeholder="自动带出" /></div>
+                    <div class="field"><label for="gradeCourseName">课程名称</label><select id="gradeCourseName" required><option value="">请选择课程</option></select></div>
+                    <div class="field"><label for="gradeUsualScore">平时成绩</label><input id="gradeUsualScore" type="number" min="0" max="100" step="0.1" required /></div>
+                    <div class="field"><label for="gradeFinalScore">期末成绩</label><input id="gradeFinalScore" type="number" min="0" max="100" step="0.1" required /></div>
+                    <div class="field"><label for="gradeTotalScore">总评</label><input id="gradeTotalScore" readonly placeholder="自动计算" /></div>
+                    <div class="field"><label for="gradeStatus">状态</label><input id="gradeStatus" readonly placeholder="自动判定" /></div>
+                    <div class="form-actions">
+                      <button type="submit">保存</button>
+                      <button type="reset" class="btn-secondary">重置</button>
+                      <button type="button" id="cancelGradeEdit" class="btn-secondary" style="display: none;">取消编辑</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">筛选条件</h3>
+                      <p class="section-subtitle">支持关键词、班级、课程、状态、排序与分页查询。</p>
+                    </div>
+                  </div>
+                  <div class="filter-grid">
+                    <div class="filter-row">
+                      <input id="gradeSearch" placeholder="按学生/学号/班级/课程搜索" />
+                      <input id="gradeFilterClassName" placeholder="班级筛选（可选）" />
+                      <input id="gradeFilterCourseName" list="gradeFilterCourseOptions" placeholder="课程筛选（可选）" />
+                      <datalist id="gradeFilterCourseOptions"></datalist>
+                      <select id="gradeFilterStatus"><option value="">全部状态</option><option value="及格">及格</option><option value="不及格">不及格</option></select>
+                    </div>
+                    <div class="filter-row">
+                      <select id="gradeSortBy">
+                        <option value="id">按ID</option>
+                        <option value="studentNo">按学号</option>
+                        <option value="studentName">按姓名</option>
+                        <option value="className">按班级</option>
+                        <option value="courseName">按课程</option>
+                        <option value="totalScore">按总评</option>
+                        <option value="createdAt">按创建时间</option>
+                      </select>
+                      <select id="gradeSortOrder"><option value="desc">降序</option><option value="asc">升序</option></select>
+                      <select id="gradePageSize"><option value="5">5条/页</option><option value="10" selected>10条/页</option><option value="20">20条/页</option></select>
+                      <button id="gradeSearchBtn">搜索</button>
+                      <button id="gradeResetBtn" class="btn-secondary">重置</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card table-wrap">
+                  <div class="panel-head" style="margin-bottom: 10px;">
+                    <div>
+                      <h3 class="section-title">成绩列表</h3>
+                      <p class="section-subtitle">支持编辑与删除操作，分页展示更清晰。</p>
+                    </div>
+                  </div>
+                  <table><thead><tr><th>ID</th><th>学生ID</th><th>学号</th><th>姓名</th><th>班级</th><th>课程</th><th>平时</th><th>期末</th><th>总评</th><th>状态</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="gradeTableBody"></tbody></table>
+                  <div class="pagination-bar"><div class="toolbar"><button id="gradePrevPageBtn" class="btn-secondary">上一页</button><button id="gradeNextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="gradePageInfo">第 1 / 1 页</span> · <span id="gradeTotalInfo">共 0 条</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-attendance" class="right-section">
+              <div class="content-stack">
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">考勤管理</h3>
+                      <p class="section-subtitle">统一管理学生日常考勤记录，支持状态追踪与筛选查询。</p>
+                    </div>
+                  </div>
+                  <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-label">考勤记录数</div><div class="stat-value" id="attendanceStatTotal">0</div></div>
+                    <div class="stat-card"><div class="stat-label">出勤率</div><div class="stat-value" id="attendanceStatRate">0%</div></div>
+                    <div class="stat-card"><div class="stat-label">缺勤数</div><div class="stat-value" id="attendanceStatAbsent">0</div></div>
+                    <div class="stat-card"><div class="stat-label">请假/迟到</div><div class="stat-value"><span id="attendanceStatLeave">0</span> / <span id="attendanceStatLate">0</span></div></div>
+                  </div>
+                </div>
+
+                <div class="card" id="attendanceFormCard">
+                  <div class="panel-head">
+                    <div>
+                      <h3 id="attendanceFormTitle">新增考勤</h3>
+                      <p class="section-subtitle">支持新增与编辑，保存后自动刷新列表与统计。</p>
+                    </div>
+                  </div>
+                  <form id="attendanceForm" class="form-grid">
+                    <input type="hidden" id="attendanceId" />
+                    <div class="field"><label for="attendanceStudent">学生ID / 姓名</label><select id="attendanceStudent" required></select></div>
+                    <div class="field"><label for="attendanceStudentNo">学号</label><input id="attendanceStudentNo" readonly placeholder="自动带出" /></div>
+                    <div class="field"><label for="attendanceClassName">班级</label><input id="attendanceClassName" readonly placeholder="自动带出" /></div>
+                    <div class="field"><label for="attendanceDate">日期</label><input id="attendanceDate" type="date" required /></div>
+                    <div class="field"><label for="attendanceStatus">考勤状态</label><select id="attendanceStatus" required><option value="出勤">出勤</option><option value="迟到">迟到</option><option value="缺勤">缺勤</option><option value="请假">请假</option></select></div>
+                    <div class="field"><label for="attendanceRemark">备注</label><input id="attendanceRemark" placeholder="可选备注信息" /></div>
+                    <div class="form-actions">
+                      <button type="submit">保存</button>
+                      <button type="reset" class="btn-secondary">重置</button>
+                      <button type="button" id="cancelAttendanceEdit" class="btn-secondary" style="display: none;">取消编辑</button>
+                    </div>
+                  </form>
+                </div>
+
+                <div class="card">
+                  <div class="panel-head">
+                    <div>
+                      <h3 class="section-title">筛选条件</h3>
+                      <p class="section-subtitle">支持关键词、班级、状态、日期、排序与分页查询。</p>
+                    </div>
+                  </div>
+                  <div class="filter-grid">
+                    <div class="filter-row">
+                      <input id="attendanceSearch" placeholder="按学生/学号/班级/日期搜索" />
+                      <input id="attendanceFilterClassName" placeholder="班级筛选（可选）" />
+                      <input id="attendanceFilterDate" type="date" />
+                      <select id="attendanceFilterStatus"><option value="">全部状态</option><option value="出勤">出勤</option><option value="迟到">迟到</option><option value="缺勤">缺勤</option><option value="请假">请假</option></select>
+                    </div>
+                    <div class="filter-row">
+                      <select id="attendanceSortBy"><option value="id">按ID</option><option value="studentNo">按学号</option><option value="studentName">按姓名</option><option value="className">按班级</option><option value="date">按日期</option><option value="status">按状态</option><option value="createdAt">按创建时间</option></select>
+                      <select id="attendanceSortOrder"><option value="desc">降序</option><option value="asc">升序</option></select>
+                      <select id="attendancePageSize"><option value="5">5条/页</option><option value="10" selected>10条/页</option><option value="20">20条/页</option></select>
+                      <button id="attendanceSearchBtn">搜索</button>
+                      <button id="attendanceResetBtn" class="btn-secondary">重置</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card table-wrap">
+                  <div class="panel-head" style="margin-bottom: 10px;">
+                    <div>
+                      <h3 class="section-title">考勤列表</h3>
+                      <p class="section-subtitle">支持详情查看、编辑与删除。</p>
+                    </div>
+                  </div>
+                  <table><thead><tr><th>ID</th><th>学生ID</th><th>学号</th><th>姓名</th><th>班级</th><th>日期</th><th>状态</th><th>备注</th><th>创建时间</th><th>操作</th></tr></thead><tbody id="attendanceTableBody"></tbody></table>
+                  <div class="pagination-bar"><div class="toolbar"><button id="attendancePrevPageBtn" class="btn-secondary">上一页</button><button id="attendanceNextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="attendancePageInfo">第 1 / 1 页</span> · <span id="attendanceTotalInfo">共 0 条</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <div id="section-system" class="right-section">
+              <div class="card">
+                <div class="section-head">
+                  <div>
+                    <h3 class="section-title">系统与日志</h3>
+                    <p class="section-subtitle">统一查看关键操作记录，支持筛选、排序与分页检索。</p>
+                  </div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="section-head">
+                  <div>
+                    <h3 class="section-title">日志统计</h3>
+                    <p class="section-subtitle">快速查看日志总量与核心操作分布。</p>
+                  </div>
+                </div>
+                <div class="stats-grid">
+                  <div class="stat-card"><div class="stat-label">日志总数</div><div class="stat-value" id="logStatTotal">0</div></div>
+                  <div class="stat-card"><div class="stat-label">今日新增</div><div class="stat-value" id="logStatToday">0</div></div>
+                  <div class="stat-card"><div class="stat-label">新增操作</div><div class="stat-value" id="logStatCreate">0</div></div>
+                  <div class="stat-card"><div class="stat-label">删除操作</div><div class="stat-value" id="logStatDelete">0</div></div>
+                </div>
+              </div>
+              <div class="card">
+                <div class="section-head">
+                  <div>
+                    <h3 class="section-title">筛选条件</h3>
+                    <p class="section-subtitle">支持模块、操作类型、关键字、排序与分页查询。</p>
+                  </div>
+                </div>
+                <div class="toolbar">
+                  <select id="logFilterModule">
+                    <option value="">全部模块</option>
+                    <option value="学生">学生</option>
+                    <option value="班级">班级</option>
+                    <option value="课程">课程</option>
+                    <option value="成绩">成绩</option>
+                    <option value="考勤">考勤</option>
+                  </select>
+                  <select id="logFilterActionType">
+                    <option value="">全部操作</option>
+                    <option value="新增">新增</option>
+                    <option value="编辑">编辑</option>
+                    <option value="删除">删除</option>
+                  </select>
+                  <input id="logSearch" placeholder="按目标名称/日志内容搜索" />
+                  <select id="logSortBy">
+                    <option value="createdAt">按时间</option>
+                    <option value="module">按模块</option>
+                    <option value="action">按操作</option>
+                  </select>
+                  <select id="logSortOrder">
+                    <option value="desc">降序</option>
+                    <option value="asc">升序</option>
+                  </select>
+                  <select id="logPageSize">
+                    <option value="5">5条/页</option>
+                    <option value="10" selected>10条/页</option>
+                    <option value="20">20条/页</option>
+                  </select>
+                  <button id="logSearchBtn">搜索</button>
+                  <button id="logResetBtn" class="btn-secondary">重置</button>
+                </div>
+              </div>
+              <div class="card">
+                <div class="section-head">
+                  <div>
+                    <h3 class="section-title">日志列表</h3>
+                    <p class="section-subtitle">展示系统关键操作，便于回溯与排查。</p>
+                  </div>
+                </div>
+                <table><thead><tr><th>ID</th><th>模块</th><th>操作</th><th>目标</th><th>操作者</th><th>日志内容</th><th>时间</th></tr></thead><tbody id="logTableBody"></tbody></table>
+                <div class="pagination-bar"><div class="toolbar"><button id="logPrevPageBtn" class="btn-secondary">上一页</button><button id="logNextPageBtn" class="btn-secondary">下一页</button></div><div class="pagination-info"><span id="logPageInfo">第 1 / 1 页</span> · <span id="logTotalInfo">共 0 条</span></div></div>
+              </div>
+              <div class="card">
+                <h3>管理员配置</h3>
+                <form id="adminForm" class="toolbar">
+                  <input id="oldPassword" type="password" placeholder="旧密码" required />
+                  <input id="newUsername" placeholder="新账号" required />
+                  <input id="newPassword" type="password" placeholder="新密码" required />
+                  <button type="submit">更新账号密码</button>
+                </form>
+                <div class="toolbar" style="margin-top: 8px;">
+                  <button id="resetAdminBtn">重置管理员为默认</button>
+                  <button id="createBackupBtn">创建备份</button>
+                  <button id="refreshBackupBtn">刷新备份列表</button>
+                  <select id="backupSelect"></select>
+                  <button id="restoreBackupBtn">恢复备份</button>
+                </div>
+              </div>
+              <div class="card"><h3>最近操作简报</h3><ul id="operationLogList"></ul></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="detailModal" class="detail-modal">
+        <div class="detail-panel">
+          <div class="detail-header">
+            <div class="detail-header-top">
+              <div>
+                <h3 class="detail-title">学生详情</h3>
+                <p class="detail-subtitle">查看学生完整档案信息与记录。</p>
+              </div>
+              <button id="detailModalCloseIcon" class="btn-secondary detail-close-btn" aria-label="关闭">×</button>
+            </div>
+          </div>
+          <div id="detailContent" class="detail-body"></div>
+          <div class="detail-footer">
+            <button id="detailEditBtn" class="btn-secondary">编辑该学生</button>
+            <button id="closeDetailBtn" class="btn-secondary">关闭</button>
+          </div>
+        </div>
+      </div>
+      <div id="deleteConfirmModal" class="confirm-modal">
+        <div class="confirm-panel">
+          <div class="confirm-header">
+            <h3 class="confirm-title">确认删除</h3>
+            <p class="confirm-subtitle">删除后将不可恢复，请确认是否继续。</p>
+          </div>
+          <div class="confirm-body">
+            <p id="deleteConfirmText" class="confirm-text">确定执行删除操作吗？</p>
+          </div>
+          <div class="confirm-footer">
+            <button id="cancelDeleteBtn" class="btn-secondary">取消</button>
+            <button id="confirmDeleteBtn" class="btn-danger">确认删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>
